@@ -18,11 +18,15 @@ Designed as a complete full-stack DevOps project, the platform combines Kubernet
 
 # 🎥 Demo Video
 
-> **Demo Video:** *(Add your YouTube or Loom link here)*
+> **Demo Video:**
 
-```
-https://your-demo-video-link
-```
+
+
+
+https://github.com/user-attachments/assets/14f7c6ae-6781-4222-85e8-2fe86cfbf984
+
+
+
 
 ---
 
