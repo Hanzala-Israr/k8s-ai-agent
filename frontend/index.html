@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Kubernetes Troubleshooting Agent Control Plane</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        pre, code { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header Banner -->
+        <header class="flex justify-between items-center border-b border-slate-800 pb-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">AI K8s Troubleshooting Agent</h1>
+                <p class="text-slate-400 mt-1 text-sm">Autonomous Cluster Diagnosis & Automated SRE Remediation Engine</p>
+            </div>
+            <div class="flex items-center space-x-3 bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Control Plane Online</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Panel: Trigger Control & History -->
+            <div class="space-y-6 lg:col-span-1">
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 text-slate-200">Trigger Investigation</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Target Namespace</label>
+                            <input type="text" id="namespaceInput" value="default" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 font-medium focus:outline-none focus:border-teal-500 transition-colors">
+                        </div>
+                        <button onclick="runInvestigation()" id="actionBtn" class="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-900 font-bold py-3 px-4 rounded-lg transition-all shadow-lg transform active:scale-[0.98]">
+                            Analyze Cluster State
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Log Stack -->
+                <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 text-slate-200">Investigation Logs Archive</h2>
+                    <div id="historyContainer" class="space-y-3 max-h-[450px] overflow-y-auto pr-2">
+                        <p class="text-xs text-slate-500 text-center py-4">No historical logs compiled yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Diagnostics Real-Time View -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Live Processing Terminal View (Hidden by Default) -->
+                <div id="loaderTerminal" class="hidden bg-slate-950 rounded-xl p-6 border border-slate-800 shadow-2xl relative overflow-hidden">
+                    <div class="flex items-center space-x-2 text-xs text-slate-500 mb-4 border-b border-slate-900 pb-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500/30 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500/30 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500/30 inline-block"></span>
+                        <span class="ml-2">TELEMETRY_SCRAPER_STREAM</span>
+                    </div>
+                    <div id="terminalStream" class="space-y-2 text-sm font-mono text-teal-400">
+                        <!-- Content Injected via Script -->
+                    </div>
+                </div>
+
+                <!-- Live Results Window -->
+                <div id="resultCard" class="hidden bg-slate-800 rounded-xl border border-slate-700 shadow-2xl overflow-hidden">
+                    <div id="resultHeader" class="px-6 py-4 bg-slate-750 border-b border-slate-700 flex justify-between items-center">
+                        <div>
+                            <span id="badgeStatus" class="px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider">Anomaly Status</span>
+                            <h3 id="targetLabel" class="text-xs font-mono text-slate-400 mt-2">Target: N/A</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-xs text-slate-400 uppercase font-bold tracking-wider">AI Confidence</span>
+                            <span id="confidenceValue" class="text-2xl font-extrabold text-teal-400">0%</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Incident Summary</h4>
+                            <p id="summaryText" class="text-slate-200 text-sm leading-relaxed"></p>
+                        </div>
+                        <div class="border-t border-slate-700 pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">Identified Root Cause</h4>
+                            <p id="rootCauseText" class="text-slate-200 text-sm leading-relaxed"></p>
+                        </div>
+                        <div class="border-t border-slate-700 pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Suggested SRE Remediation Script</h4>
+                            <pre class="bg-slate-950 p-4 rounded-lg border border-slate-900 text-xs text-amber-400 overflow-x-auto whitespace-pre-wrap mt-2"><code id="fixCode"></code></pre>
+                        </div>
+                        <div class="border-t border-slate-700 pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Long-Term Prevention Strategy</h4>
+                            <p id="preventionText" class="text-slate-300 text-sm leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://" + window.location.hostname + ":8000/api";
+
+        window.addEventListener('DOMContentLoaded', fetchHistory);
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch(`${API_URL}/history`);
+                const data = await res.json();
+                const container = document.getElementById('historyContainer');
+                
+                if (data.length === 0) return;
+                
+                container.innerHTML = data.map(item => `
+                    <div class="bg-slate-900 p-3.5 rounded-lg border ${item.status === 'clean' ? 'border-emerald-500/20' : 'border-rose-500/20'} cursor-pointer hover:border-slate-500 transition-colors" onclick='renderSingleAnalysis(${JSON.stringify(item)})'>
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-mono font-bold text-slate-400">#${item.id} [ns: ${item.namespace}]</span>
+                            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${item.status === 'clean' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">${item.status}</span>
+                        </div>
+                        <p class="text-xs text-slate-300 truncate mt-1.5 font-medium">${item.analysis.incident_summary}</p>
+                        <span class="text-[10px] text-slate-500 block mt-2">${item.timestamp} UTC</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Failed pulling archive logs:", err);
+            }
+        }
+
+        async function runInvestigation() {
+            const ns = document.getElementById('namespaceInput').value.trim() || "default";
+            const btn = document.getElementById('actionBtn');
+            const loader = document.getElementById('loaderTerminal');
+            const stream = document.getElementById('terminalStream');
+            const resultCard = document.getElementById('resultCard');
+
+            btn.disabled = true;
+            resultCard.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            // Artificial terminal stream visualization matching HLD blueprint steps
+            stream.innerHTML = `<p class="animate-pulse">⏳ Initializing secure hooks connection to cluster APIs...</p>`;
+            
+            setTimeout(() => { stream.innerHTML += `<p>📡 Checking namespace [${ns}] configuration maps and pod run loops...</p>`; }, 600);
+            setTimeout(() => { stream.innerHTML += `<p>📋 Reading cluster internal Warning event parameters...</p>`; }, 1200);
+            setTimeout(() => { stream.innerHTML += `<p>🧬 Scraping container stderr execution dumps and logging channels...</p>`; }, 1800);
+            setTimeout(() => { stream.innerHTML += `<p class="text-yellow-400 animate-pulse">🧠 Forwarding aggregated evidence dossier to Gemini Reasoning Grid...</p>`; }, 2400);
+
+            try {
+                const response = await fetch(`${API_URL}/investigate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ namespace: ns })
+                });
+                
+                const data = await response.json();
+                
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    btn.disabled = false;
+                    displayAnalysis(data);
+                    fetchHistory();
+                }, 3200);
+
+            } catch (err) {
+                setTimeout(() => {
+                    stream.innerHTML += `<p class="text-red-500">❌ Communication with backend control plane failed: ${err}</p>`;
+                    btn.disabled = false;
+                }, 3200);
+            }
+        }
+
+        function displayAnalysis(payload) {
+            document.getElementById('resultCard').classList.remove('hidden');
+            const badge = document.getElementById('badgeStatus');
+            
+            if (payload.status === "clean") {
+                badge.className = "px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider bg-emerald-500 text-slate-950";
+                badge.innerText = "Namespace Healthy";
+                document.getElementById('targetLabel').innerText = `Status: Complete Scan Log Passed Clean`;
+            } else {
+                badge.className = "px-2.5 py-1 text-xs font-bold rounded-md uppercase tracking-wider bg-rose-500 text-slate-100";
+                badge.innerText = `Anomaly: ${payload.investigated_target.phase}`;
+                document.getElementById('targetLabel').innerText = `Target: Pod [${payload.investigated_target.pod}] | Container [${payload.investigated_target.container}]`;
+            }
+
+            document.getElementById('confidenceValue').innerText = `${payload.analysis.confidence_score}%`;
+            document.getElementById('summaryText').innerText = payload.analysis.incident_summary;
+            document.getElementById('rootCauseText').innerText = payload.analysis.root_cause;
+            document.getElementById('fixCode').innerText = payload.analysis.suggested_fix;
+            document.getElementById('preventionText').innerText = payload.analysis.prevention_strategy;
+        }
+
+        function renderSingleAnalysis(historicalItem) {
+            const mockPayload = {
+                status: historicalItem.status,
+                investigated_target: { pod: historicalItem.target_pod, container: "N/A", phase: "Anomaly" },
+                analysis: historicalItem.analysis
+            };
+            displayAnalysis(mockPayload);
+        }
+    </script>
+</body>
+</html>
